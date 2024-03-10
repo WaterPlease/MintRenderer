@@ -40,7 +40,7 @@ namespace MintChoco {
 		cFence();
 		~cFence();
 
-		bool Create(cDevice& Device, UINT InitialValue, D3D12_FENCE_FLAGS Flags);
+		bool Create(const cDevice& Device, UINT InitialValue, D3D12_FENCE_FLAGS Flags);
 		void Destroy();
 
 		bool IsCreated() const { return FencePtr.Get(); }

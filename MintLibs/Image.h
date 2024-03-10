@@ -36,7 +36,7 @@ public:
 
 class cImage {
 public:
-	const size_t Alignment = 4;
+	const size_t RowAlignment = 4;
 
 	cImage();
 	~cImage();
@@ -44,7 +44,9 @@ public:
 	bool Create(cSizei Size, ePixelFormat Format);
 	void Destroy();
 
-	const cSizei&	GetImageSize() { return Size;}
+	bool IsCreated() const { return pData; }
+
+	const cSizei&	GetImageSize() const { return Size;}
 
 	ePixelFormat GetPixelFormat() const { return PixelFormat; }
 	UINT GetBPP() const { return BPP; }

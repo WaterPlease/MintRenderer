@@ -26,7 +26,7 @@ namespace MintChoco {
 
 	class cGraphicsPipelineStateObject : public cPipelineStateObject {
 	public:
-		bool Create(cDevice& Device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc, cPipelineLibrary* pPipelineLibrary = nullptr);
+		bool Create(cDevice& Device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc);
 
 	protected:
 	};

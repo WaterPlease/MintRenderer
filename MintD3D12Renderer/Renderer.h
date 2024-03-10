@@ -50,9 +50,9 @@ namespace MintChoco {
 		cD3D12DeviceDebug&			GetDeviceDebug()		{ return DeviceDebug; }
 		const cD3D12DeviceDebug&	GetDeviceDebug() const	{ return DeviceDebug; }
 
-		cCommandQueue*	GetCommandQueue(cDevice::eCommandType CmdType);
-		bool			WaitCommandQueue(cDevice::eCommandType CmdType, DWORD Timeout = INFINITE);
-		bool			FlushCommandQueue(cDevice::eCommandType CmdType, size_t BufferCount, DWORD Timeout = INFINITE);
+		cCommandQueue*	GetCommandQueue(cDevice::eCommandType CmdType) const;
+		bool			WaitCommandQueue(cDevice::eCommandType CmdType, DWORD Timeout = INFINITE) const;
+		bool			FlushCommandQueue(cDevice::eCommandType CmdType, size_t BufferCount, DWORD Timeout = INFINITE) const;
 
 		bool			IsSupportTearing() const { return bSupportTearing; }
 	protected:

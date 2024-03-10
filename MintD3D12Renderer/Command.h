@@ -37,7 +37,7 @@ namespace MintChoco {
 
 		bool Signal(cFence& Fence, UINT Value) const;
 
-		bool Wait(cDevice& Device, DWORD Timeout) const;
+		bool Sync(const cDevice& Device, DWORD Timeout) const;
 
 		void ExecuteCommandList(cCommandList& CommandList);
 		void ExecuteCommandList(std::vector<cCommandList*> CommandLists);
@@ -59,7 +59,7 @@ namespace MintChoco {
 		cCommandAllocator();
 		~cCommandAllocator();
 
-		bool Create(cDevice& Device, D3D12_COMMAND_LIST_TYPE Type);
+		bool Create(const cDevice& Device, D3D12_COMMAND_LIST_TYPE Type);
 		void Destroy();
 
 		bool Reset();
@@ -96,7 +96,7 @@ namespace MintChoco {
 		~cGraphicsCommandList();
 
 		// 추후 PipeState 클래스 생성 시에 메소드 시그니처 수정하기
-		bool Create(cDevice& Device, cCommandAllocator& Allocator, D3D12_COMMAND_LIST_TYPE Type, UINT NodeMask = 0, ID3D12PipelineState* pPipeState = NULL);
+		bool Create(const cDevice& Device, cCommandAllocator& Allocator, D3D12_COMMAND_LIST_TYPE Type, UINT NodeMask = 0, ID3D12PipelineState* pPipeState = NULL);
 		void Destroy();
 
 		bool IsCreated() const { return CommandListPtr.Get(); }
@@ -111,7 +111,7 @@ namespace MintChoco {
 		void OMSetRenderTargetsContinuous(size_t RTCount, const D3D12_CPU_DESCRIPTOR_HANDLE* pRTDescriptorHandle, const D3D12_CPU_DESCRIPTOR_HANDLE* pDSDescriptorHandle);
 		void OMSetRenderTargetsDiscrete(size_t RTCount, const D3D12_CPU_DESCRIPTOR_HANDLE* pRTDescriptorHandle, const D3D12_CPU_DESCRIPTOR_HANDLE* pDSDescriptorHandle);
 
-		void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const DirectX::XMFLOAT4& Color4f, size_t RectCount, const D3D12_RECT* pRect);
+		void ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView, const float* Color4f, size_t RectCount, const D3D12_RECT* pRect);
 
 		void CopyResource(const cResource& Dest, const cResource& Source);
 		void CopyBufferRegion(const cResource& Dest, size_t DestOffset, const cResource& Source, size_t SourceOffset, size_t Size);

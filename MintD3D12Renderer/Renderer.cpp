@@ -91,28 +91,27 @@ bool cBaseD3D12Renderer::InitDeviceDebug() {
 }
 
 void cBaseD3D12Renderer::Destroy(bool bReportLiveDeviceObject) {
-	if (bReportLiveDeviceObject) {
-		DeviceDebug.ReportLiveDeviceObjects();
-	}
-
 	Device.Destroy();
 	DeviceDebug.Deinitialize();
 	HWMngr.Deinitialize();
+	if (bReportLiveDeviceObject) {
+		DeviceDebug.ReportLiveDeviceObjects();
+	}
 }
 
-cCommandQueue* cBaseD3D12Renderer::GetCommandQueue(cDevice::eCommandType CmdType) {
+cCommandQueue* cBaseD3D12Renderer::GetCommandQueue(cDevice::eCommandType CmdType) const {
 	return Device.GetCommandQueue(CmdType);
 }
 
-bool cBaseD3D12Renderer::WaitCommandQueue(cDevice::eCommandType CmdType, DWORD Timeout) {
+bool cBaseD3D12Renderer::WaitCommandQueue(cDevice::eCommandType CmdType, DWORD Timeout) const {
 	auto pCommandQueue = GetCommandQueue(cDevice::eCommandType::COMMAND_TYPE_DIRECT);
 	if (pCommandQueue) {
-		return pCommandQueue->Wait(Device, INFINITE);
+		return pCommandQueue->Sync(Device, INFINITE);
 	}
 	return false;
 }
 
-bool cBaseD3D12Renderer::FlushCommandQueue(cDevice::eCommandType CmdType, size_t BufferCount, DWORD Timeout) {
+bool cBaseD3D12Renderer::FlushCommandQueue(cDevice::eCommandType CmdType, size_t BufferCount, DWORD Timeout) const {
 	cFence Fence;
 	if (!Fence.Create(Device, 0, D3D12_FENCE_FLAG_NONE)) {
 		assert(false);

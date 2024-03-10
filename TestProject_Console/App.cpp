@@ -3,6 +3,8 @@
 #include <cassert>
 #include <DirectXMath.h>
 #include <iostream>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 using namespace MintChoco;
 using namespace DirectX;
@@ -185,7 +187,7 @@ bool cApp::Create(HINSTANCE hInstance, LPCTSTR AppName, LPCTSTR Title, int nCmdS
     }
     Log(TEXT("Swapchain has been Created successfully.\n"));
 
-    CreateTriangle();
+    CreateRect();
 
     SetApp(this);
     bNeedResizeSwapchain = false;
@@ -193,7 +195,7 @@ bool cApp::Create(HINSTANCE hInstance, LPCTSTR AppName, LPCTSTR Title, int nCmdS
 }
 
 void cApp::Destroy() {
-    DestroyTriangle();
+    DestroyRect();
 
     bool bNeedToLog = Swapchain.IsCreated();
     Swapchain.Destroy();
@@ -244,11 +246,12 @@ void cApp::Run() {
             break;
         }
         if (Swapchain.GetCurrentRenderTargetDescriptor()) {
-            CommandList.ClearRenderTargetView(*Swapchain.GetCurrentRenderTargetDescriptor(), XMFLOAT4{ 0.4f, 0.4f, 0.4f, 1.f}, 0, nullptr);
+            const float ClearColor4f[] = {0.4f, 0.4f, 0.4f, 1.f};
+            CommandList.ClearRenderTargetView(*Swapchain.GetCurrentRenderTargetDescriptor(), ClearColor4f, 0, nullptr);
         }
         CommandList.OMSetRenderTargetsDiscrete(1, Swapchain.GetCurrentRenderTargetDescriptor(), nullptr);
 
-        DrawTriangle(CommandList);
+        DrawRect(CommandList);
 
         Swapchain.EndFrame(CommandList);
 
@@ -352,145 +355,94 @@ LRESULT cApp::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             ((cApp*)GetApp())->SetFullscreen(!bFullscreen);
         }
         return 0;
+    case WM_MOUSEMOVE:
+        if (GetApp()) {
+            ((cApp*)GetApp())->RectPos.x = LOWORD(lParam);
+            ((cApp*)GetApp())->RectPos.y = HIWORD(lParam);
+	    }
+        return 0;
     }
     return cBaseApp::WindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-void cApp::CreateTriangle() {
-    const float sin60 = sin(sqrt(3.0) * 0.5);;
-    const float RectVertexData[] =
-    {
-        -0.5, -0.5, 0.0, 0.0, 1.0, // LB
-        -0.5,  0.5, 0.0, 0.0, 0.0, // LT
-         0.5,  0.5, 0.0, 1.0, 0.0, // RT
-         0.5, -0.5, 0.0, 1.0, 1.0, // RB
+void cApp::CreateRect() {
+    const float sin60 = sin(sqrt(3.0) * 0.5);
+
+    const sVertex RectVertexData[] = {
+        {glm::vec3(-0.5,-0.5, 0.0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(1.0, 0.0, 0.0), glm::vec2(0.0, 1.0), glm::vec2(), glm::vec4(1.0), glm::u16vec4(), glm::vec4(0.0)},
+        {glm::vec3(-0.5, 0.5, 0.0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(1.0, 0.0, 0.0), glm::vec2(0.0, 0.0), glm::vec2(), glm::vec4(1.0), glm::u16vec4(), glm::vec4(0.0)},
+        {glm::vec3(0.5,  0.5, 0.0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0), glm::vec2(), glm::vec4(1.0), glm::u16vec4(), glm::vec4(0.0)},
+        {glm::vec3(0.5, -0.5, 0.0), glm::vec3(0.0, 0.0, -1.0), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 1.0), glm::vec2(), glm::vec4(1.0), glm::u16vec4(), glm::vec4(0.0)},
     };
-    const uint32_t RectVertexIndex[] = {
+    const UINT RectVertexIndex[] = {
         1, 3, 0,
         1, 2, 3,
     };
 
-    cCommandQueue* pQueue = Renderer.GetCommandQueue(cDevice::eCommandType::COMMAND_TYPE_DIRECT);
-    assert(pQueue);
-    cCommandAllocator Allocator;
-    if (!Allocator.Create(Renderer.GetDevice(), D3D12_COMMAND_LIST_TYPE_DIRECT))
-        assert(false);
-    cGraphicsCommandList CmdList;
-    if (!CmdList.Create(Renderer.GetDevice(), Allocator, D3D12_COMMAND_LIST_TYPE_DIRECT))
-        assert(false);
-    CmdList.Reset(Allocator);
+    std::vector<sVertex> Vertices(4);
+    std::vector<UINT>   Indecies(6);
+    memcpy(Vertices.data(), RectVertexData, sizeof(RectVertexData));
+    memcpy(Indecies.data(), RectVertexIndex, sizeof(RectVertexIndex));
+    bool bResult = RectPrimitive.Create(Renderer, Vertices, Indecies);
 
-    cResource UploadBuffer, TextureUploadBuffer, IndexUploadBuffer;
-    cResourceFactory ResourceFactory(Renderer.GetDevice());
-    if (!ResourceFactory.CreateUploadBuffer(UploadBuffer, sizeof(RectVertexData)))
-        assert(false);
-    if (!ResourceFactory.CreateBuffer(RectVertexBuffer, sizeof(RectVertexData), D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON))
-        assert(false);
 
-    auto Token = UploadBuffer.Map(0, sizeof(RectVertexData));
-    memcpy(Token.Ptr, RectVertexData, sizeof(RectVertexData));
-    UploadBuffer.Unmap(Token);
-    cResoureBarrier CopyDestBarrier;
-    CopyDestBarrier.CreateTransition(RectVertexBuffer,
-                                     D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST,
-                                     false);
-    CmdList.GetGraphicsCommandList()->ResourceBarrier(1, CopyDestBarrier.GetBarrier());
-    CmdList.CopyResource(RectVertexBuffer, UploadBuffer);
-    RectVertexBufferView.BufferLocation = RectVertexBuffer.GetResouce()->GetGPUVirtualAddress();
-    RectVertexBufferView.StrideInBytes = sizeof(float) * 5;
-    RectVertexBufferView.SizeInBytes = sizeof(float) * 5 * 4;
-
-    cResoureBarrier VertexBufferBarrier;
-    VertexBufferBarrier.CreateTransition(RectVertexBuffer,
-                                         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-                                         false);
-    CmdList.GetGraphicsCommandList()->ResourceBarrier(1, VertexBufferBarrier.GetBarrier());
-
-    if (!ResourceFactory.CreateUploadBuffer(IndexUploadBuffer, sizeof(RectVertexIndex)))
-        assert(false);
-    if (!ResourceFactory.CreateBuffer(RectIndexBuffer, sizeof(RectVertexIndex), D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_FLAG_NONE, D3D12_RESOURCE_STATE_COMMON))
-        assert(false);
-    Token = IndexUploadBuffer.Map(0, sizeof(RectVertexIndex));
-    memcpy(Token.Ptr, RectVertexIndex, sizeof(RectVertexIndex));
-    IndexUploadBuffer.Unmap(Token);
-    cResoureBarrier IndexCopyDestBarrier;
-    IndexCopyDestBarrier.CreateTransition(RectIndexBuffer,
-                                          D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST,
-                                          false);
-    CmdList.GetGraphicsCommandList()->ResourceBarrier(1, IndexCopyDestBarrier.GetBarrier());
-    CmdList.CopyResource(RectIndexBuffer, IndexUploadBuffer);
-    RectIndexBufferView.BufferLocation = RectIndexBuffer.GetResouce()->GetGPUVirtualAddress();
-    RectIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-    RectIndexBufferView.SizeInBytes = sizeof(RectVertexIndex);
-    IndexCopyDestBarrier.CreateTransition(RectIndexBuffer,
-                                          D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER,
-                                          false);
-    CmdList.GetGraphicsCommandList()->ResourceBarrier(1, IndexCopyDestBarrier.GetBarrier());
-
-    D3D12_INPUT_ELEMENT_DESC VertexLayout[] =
-    {
-        {"Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-        {"TexCoord", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-    };
-
-    LoadTriangleShader();
-
+    MintChoco::cImage RectTextureImage;
     RectTextureImage.Destroy();
-    bool bResult = cImageLoader::Load(RectTextureImage, (ProcessDiectory + TEXT("Texture.jpg")).c_str());
+    bResult = cImageLoader::Load(RectTextureImage, (ProcessDiectory + TEXT("Texture.jpg")).c_str());
 
-    const cSizei& TriangleTextureSize = RectTextureImage.GetImageSize();
-    bResult = ResourceFactory.CreateTextureBuffer(
-        RectTexture, cVolumeui(TriangleTextureSize.Width, TriangleTextureSize.Height, 0), false, 
-        GetDXGIFormat(RectTextureImage.GetPixelFormat()), D3D12_TEXTURE_LAYOUT_UNKNOWN, D3D12_HEAP_FLAG_NONE, D3D12_RESOURCE_FLAG_NONE);
+    bResult = RectTexture.CreateFromImage(Renderer, RectTextureImage);
 
-    bResult = ResourceFactory.CreateUploadBuffer(TextureUploadBuffer, RectTextureImage.GetDataSize());
-    auto TextureUploadToken = TextureUploadBuffer.Map(0, RectTextureImage.GetDataSize());
-    memcpy_s(TextureUploadToken.Ptr, TextureUploadToken.Size, RectTextureImage.GetData(), RectTextureImage.GetDataSize());
-    TextureUploadBuffer.Unmap(TextureUploadToken);
-    D3D12_BOX TextureBox = {};
-    TextureBox.left = TextureBox.top = TextureBox.front;
-    TextureBox.right = TriangleTextureSize.Width;
-    TextureBox.bottom = TriangleTextureSize.Height;
-    TextureBox.back = 1;
-    D3D12_TEXTURE_COPY_LOCATION     DestCopyLocation, SrcCopyLocation;
+    cResourceFactory Factory(Renderer.GetDevice());
+    bResult = Factory.CreateUploadBuffer(RectTransform, sizeof(sTransform) * Swapchain.GetBufferCount());
 
-    SrcCopyLocation.pResource = TextureUploadBuffer.GetResouce();
-    SrcCopyLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-    SrcCopyLocation.PlacedFootprint.Offset = 0;
-    SrcCopyLocation.PlacedFootprint.Footprint.Width = RectTextureImage.GetImageSize().Width;
-    SrcCopyLocation.PlacedFootprint.Footprint.Height= RectTextureImage.GetImageSize().Height;
-    SrcCopyLocation.PlacedFootprint.Footprint.Depth = 1;
-    SrcCopyLocation.PlacedFootprint.Footprint.RowPitch = RectTextureImage.GetStride();
-    SrcCopyLocation.PlacedFootprint.Footprint.Format = GetDXGIFormat(RectTextureImage.GetPixelFormat());
-
-    DestCopyLocation.pResource = RectTexture.GetResouce();
-    DestCopyLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
-    DestCopyLocation.SubresourceIndex = 0;
-    CmdList.GetGraphicsCommandList()->CopyTextureRegion(&DestCopyLocation, 0, 0, 0, &SrcCopyLocation, &TextureBox);
-
-    cResoureBarrier TextureBarrier;
-    TextureBarrier.CreateTransition(
-	    RectTexture, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, false);
-    CmdList.GetGraphicsCommandList()->ResourceBarrier(1, TextureBarrier.GetBarrier());
-
-    RectDescripotrHeap.Create(Renderer.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    RectDescripotrHeap[0].Create(Renderer.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    RectDescripotrHeap[1].Create(Renderer.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+    RectDescripotrHeap[2].Create(Renderer.GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
     D3D12_SHADER_RESOURCE_VIEW_DESC SRVDesc;
-	SRVDesc.Format = RectTexture.GetDescription1().Format;
+	SRVDesc.Format = RectTexture.GetBuffer().GetDescription1().Format;
     SRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     SRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
     SRVDesc.Texture2D.MostDetailedMip = 0;
     SRVDesc.Texture2D.MipLevels = 1;
     SRVDesc.Texture2D.PlaneSlice = 0;
     SRVDesc.Texture2D.ResourceMinLODClamp = 0;
-    RectDescripotrHeap.CreateShaderResourceView(Renderer.GetDevice(), RectTexture, 0, SRVDesc);
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC CBVDesc;
+    CBVDesc.SizeInBytes = sizeof(sTransform);
+
+    for (size_t iBuffer = 0; iBuffer < Swapchain.GetBufferCount(); ++iBuffer) {
+        CBVDesc.BufferLocation = RectTransform.GetResouce()->GetGPUVirtualAddress() + sizeof(sTransform) * iBuffer;
+        RectDescripotrHeap[iBuffer].CreateConstantBufferView(Renderer.GetDevice(), 0, CBVDesc);
+
+        RectDescripotrHeap[iBuffer].CreateShaderResourceView(Renderer.GetDevice(), RectTexture.GetBuffer(), 1, SRVDesc);
+    }
+
+    auto Token = RectTransform.Map(0, sizeof(sTransform) * Swapchain.GetBufferCount());
+    RectTransformBuffer = (BYTE*)Token.Ptr;
+
+    LoadRectShader();
+}
+
+void cApp::LoadRectShader() {
+    WCHAR _RootSignature[] = TEXT("TriangleRS.cso");
+    WCHAR _Vertex[] = TEXT("TriangleVS.cso");
+    WCHAR _Pixel[] = TEXT("TrianglePS.cso");
+
+    std::wstring Root = ProcessDiectory + _RootSignature;
+    std::wstring Vertex = ProcessDiectory + _Vertex;
+    std::wstring Pixel = ProcessDiectory + _Pixel;
+
+    Shader[0].Create(Root);
+    Shader[1].Create(Vertex);
+    Shader[2].Create(Pixel);
 
     RectRootSignature.Create(Renderer.GetDevice(), Shader[0].GetD3D12ShaderByteCode());
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC Desc;
     // Input Layout
     Desc.pRootSignature = RectRootSignature.GetRootSignature();
-    Desc.InputLayout.NumElements = 2;
-    Desc.InputLayout.pInputElementDescs = VertexLayout;
+    Desc.InputLayout.NumElements = sVertex::GetAttributeCount();
+    Desc.InputLayout.pInputElementDescs = sVertex::InputElement;
     Desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
     Desc.VS = Shader[1].GetD3D12ShaderByteCode();
     Desc.PS = Shader[2].GetD3D12ShaderByteCode();
@@ -499,7 +451,7 @@ void cApp::CreateTriangle() {
     Desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     Desc.HS = {};
     // Rasterizer
-	Desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+    Desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
     Desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
     Desc.RasterizerState.FrontCounterClockwise = FALSE;
     Desc.RasterizerState.DepthBias = 0;
@@ -521,7 +473,7 @@ void cApp::CreateTriangle() {
     Desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
     Desc.BlendState.AlphaToCoverageEnable = FALSE;
     Desc.BlendState.IndependentBlendEnable = FALSE;
-	Desc.BlendState.RenderTarget[0].BlendEnable = TRUE;
+    Desc.BlendState.RenderTarget[0].BlendEnable = TRUE;
     Desc.BlendState.RenderTarget[0].LogicOpEnable = FALSE;
     Desc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
     Desc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ZERO;
@@ -549,40 +501,34 @@ void cApp::CreateTriangle() {
     Desc.SampleDesc.Count = 1;
     Desc.SampleDesc.Quality = 0;
 
-    bResult = RectPipelineStateObject.Create(Renderer.GetDevice(), Desc);
-
-    CmdList.Close();
-    pQueue->ExecuteCommandList(CmdList);
-    pQueue->Wait(Renderer.GetDevice(), INFINITE);
+    RectPipelineStateObject.Create(Renderer.GetDevice(), Desc);
 }
 
-void cApp::LoadTriangleShader() {
-    WCHAR _RootSignature[] = TEXT("TriangleRS.cso");
-    WCHAR _Vertex[] = TEXT("TriangleVS.cso");
-    WCHAR _Pixel[] = TEXT("TrianglePS.cso");
+void cApp::DestroyRect() {
+    RectPipelineStateObject.Destroy();
 
-    std::wstring Root = ProcessDiectory + _RootSignature;
-    std::wstring Vertex = ProcessDiectory + _Vertex;
-    std::wstring Pixel = ProcessDiectory + _Pixel;
+    RectRootSignature.Destroy();
+    for (size_t iShader = 0; iShader < 3; ++iShader) {
+        Shader[iShader].Destroy();
+    }
 
-    Shader[0].Create(Root);
-    Shader[1].Create(Vertex);
-    Shader[2].Create(Pixel);
+    for (size_t iBuffer = 0; iBuffer < Swapchain.GetBufferCount(); ++iBuffer) {
+		RectDescripotrHeap[iBuffer].Destroy();
+    }
+    RectTexture.Destroy();
+    RectPrimitive.Destroy();
 }
 
-void cApp::DestroyTriangle() {
-    RectVertexBuffer.Destroy();
-    memset(&RectVertexBufferView, 0, sizeof(D3D12_VERTEX_BUFFER_VIEW));
-}
+void cApp::DrawRect(cGraphicsCommandList& CmdList) {
+    const size_t iCurrentBuffer = Swapchain.GetCurrentBackBufferIndex();
 
-void cApp::DrawTriangle(cGraphicsCommandList& CmdList) {
     CmdList.GetGraphicsCommandList()->SetPipelineState(RectPipelineStateObject.GetPipelineState());
     CmdList.GetGraphicsCommandList()->SetGraphicsRootSignature(RectRootSignature.GetRootSignature());
-    CmdList.SetDescriptorHeap(RectDescripotrHeap);
+    CmdList.SetDescriptorHeap(RectDescripotrHeap[iCurrentBuffer]);
 
-    CmdList.GetGraphicsCommandList()->IASetVertexBuffers(0, 1, &RectVertexBufferView);
-    CmdList.GetGraphicsCommandList()->IASetIndexBuffer(&RectIndexBufferView);
-    CmdList.GetGraphicsCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    CmdList.GetGraphicsCommandList()->IASetVertexBuffers(0, 1, &RectPrimitive.GetVertexBufferView());
+    CmdList.GetGraphicsCommandList()->IASetIndexBuffer(&RectPrimitive.GetIndexBufferView());
+    CmdList.GetGraphicsCommandList()->IASetPrimitiveTopology(RectPrimitive.GetTopology());
 
     D3D12_VIEWPORT ViewPort;
     ViewPort.Width = Size.cx;
@@ -605,7 +551,25 @@ void cApp::DrawTriangle(cGraphicsCommandList& CmdList) {
     t = sin(t * 5.0) * 0.5 + 0.5;
     const float Color[3] = {t, 0, 0};
     CmdList.GetGraphicsCommandList()->SetGraphicsRoot32BitConstants(0, 3, Color, 0);
-    CmdList.GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(1, RectDescripotrHeap.GetDescriptorHeap()->GetGPUDescriptorHandleForHeapStart());
+    CmdList.GetGraphicsCommandList()->SetGraphicsRootDescriptorTable(1, *RectDescripotrHeap[iCurrentBuffer].GetGPUDescriptorHandle(0));
+
+    // transform
+    glm::vec2 Pos = RectPos;
+    Pos.y = Swapchain.GetSize().Height - Pos.y;
+    Pos.x -= Swapchain.GetSize().Width * 0.5f;
+    Pos.y -= Swapchain.GetSize().Height * 0.5f;
+    sTransform Transform;
+    Transform.Model         = glm::translate(glm::mat4(1.), glm::vec3(Pos, 0.0));
+	//Transform.Model         = glm::rotate(Transform.Model, RectPos.x * 0.01f,glm::vec3(0, 0, -1));
+	Transform.Model         = glm::scale(Transform.Model, glm::vec3(400));
+
+    Transform.View          = glm::lookAtLH(glm::vec3(0, 0, -5), glm::vec3(0.0), glm::vec3(0.0, 1.0, 0.0));
+    Transform.InverseView   = glm::inverse(Transform.View);
+    Transform.Projection    = glm::orthoLH_ZO(
+        -Swapchain.GetSize().Width / 2.0f, Swapchain.GetSize().Width / 2.0f,
+        -Swapchain.GetSize().Height / 2.0f, Swapchain.GetSize().Height / 2.0f,
+        1.0f, 1000.f);
+    memcpy(RectTransformBuffer + sizeof(sTransform) * iCurrentBuffer, &Transform, sizeof(sTransform));
 
     CmdList.GetGraphicsCommandList()->DrawIndexedInstanced(6, 1, 0, 0, 0);
 }

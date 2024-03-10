@@ -28,7 +28,7 @@ namespace MintChoco {
 		void Destroy();
 
 		sMMapToken	Map(size_t Offset, size_t Size);
-		void		Unmap(const sMMapToken& Token);
+		void		Unmap(sMMapToken& Token);
 
 		bool					IsCreated() const { return ResourcePtr.Get(); }
 		ID3D12ResourceN*		GetResouce() const { return ResourcePtr.Get(); };
@@ -62,13 +62,13 @@ namespace MintChoco {
 
 	class cResourceFactory {
 	public:
-		cResourceFactory(cDevice& Device) : Device(Device) {}
+		cResourceFactory(const cDevice& Device) : Device(Device) {}
 
 		bool CreateBuffer(cResource& Resource, size_t BufferSize, D3D12_HEAP_FLAGS HeapFlag, D3D12_RESOURCE_FLAGS ResourceFlag, D3D12_RESOURCE_STATES InitailState= D3D12_RESOURCE_STATE_COMMON);
 		bool CreateUploadBuffer(cResource& Resource, size_t BufferSize);
 
 		bool CreateTextureBuffer(cResource& Resource, const cVolumeui& TextureSize, bool bArray, DXGI_FORMAT Format, D3D12_TEXTURE_LAYOUT Layout, D3D12_HEAP_FLAGS HeapFlag, D3D12_RESOURCE_FLAGS ResourceFlag, D3D12_RESOURCE_STATES InitailState = D3D12_RESOURCE_STATE_COMMON);
 	protected:
-		cDevice& Device;
+		const cDevice& Device;
 	};
 }

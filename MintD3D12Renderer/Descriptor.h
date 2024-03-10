@@ -20,6 +20,7 @@ namespace MintChoco {
 		// Descriptor Creation
 		bool CreateRenderTargetView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_RENDER_TARGET_VIEW_DESC& Desc);
 		bool CreateShaderResourceView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc);
+		bool CreateConstantBufferView(cDevice& Device, size_t iDescriptor, const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc);
 
 		bool					IsCreated() const { return DescriptorHeap.Get(); }
 		ID3D12DescriptorHeapN*	GetDescriptorHeap() const { return DescriptorHeap.Get(); }

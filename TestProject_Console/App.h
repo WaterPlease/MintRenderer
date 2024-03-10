@@ -5,9 +5,11 @@
 
 #include "Geometry.h"
 #include "Pipeline.h"
-#include "Renderer.h"
+#include "MintRenderer.h"
 #include "Shader.h"
 #include "Image.h"
+#include "Mesh.h"
+#include "Texture.h"
 
 class cBaseApp {
 public:
@@ -54,7 +56,7 @@ public:
 
 	void	OnSize(UINT nType, UINT Width, UINT Height);
 protected:
-	MintChoco::cBaseD3D12Renderer Renderer;
+	MintChoco::cMintRenderer Renderer;
 	MintChoco::cSwapchain Swapchain;
 
 	bool bUseVsync;
@@ -72,20 +74,29 @@ protected:
 private:
 	std::wstring ProcessDiectory;
 
-	// Triangle Model
-	MintChoco::cShader	 Shader[3];
-	MintChoco::cResource RectVertexBuffer;
-	MintChoco::cResource RectIndexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW RectVertexBufferView;
-	D3D12_INDEX_BUFFER_VIEW  RectIndexBufferView;
-	MintChoco::cRootSignature RectRootSignature;
-	MintChoco::cGraphicsPipelineStateObject RectPipelineStateObject;
-	MintChoco::cImage		RectTextureImage;
-	MintChoco::cResource	RectTexture;
-	MintChoco::cDescriptorHeap RectDescripotrHeap;
+	MintChoco::cPrimitive	RectPrimitive;
+	MintChoco::cTexture		RectTexture;
+#pragma pack(push, 4)
+	struct sTransform {
+		glm::mat4 Model;
+		glm::mat4 View;
+		glm::mat4 InverseView;
+		glm::mat4 Projection;
+	};
+#pragma pack(pop)
+	MintChoco::cResource		RectTransform;
+	BYTE*						RectTransformBuffer;
+	MintChoco::cDescriptorHeap	RectDescripotrHeap[3];
+	glm::vec2					RectPos;
+	glm::vec2					MousePos;
 
-	void CreateTriangle();
-	void LoadTriangleShader();
-	void DestroyTriangle();
-	void DrawTriangle(MintChoco::cGraphicsCommandList& CmdList);
+	// Triangle Model
+	MintChoco::cShader						Shader[3];
+	MintChoco::cRootSignature				RectRootSignature;
+	MintChoco::cGraphicsPipelineStateObject RectPipelineStateObject;
+
+	void CreateRect();
+	void LoadRectShader();
+	void DestroyRect();
+	void DrawRect(MintChoco::cGraphicsCommandList& CmdList);
 };

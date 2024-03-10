@@ -57,7 +57,7 @@ cResource::sMMapToken cResource::Map(size_t Offset, size_t Size) {
 	return Token;
 }
 
-void cResource::Unmap(const sMMapToken& Token) {
+void cResource::Unmap(sMMapToken& Token) {
 	if (!IsCreated())
 		return;
 
@@ -66,6 +66,8 @@ void cResource::Unmap(const sMMapToken& Token) {
 
 	D3D12_RANGE Range = Token;
 	ResourcePtr->Unmap(0, &Range);
+
+	Token = {};
 }
 
 void cResource::InvalidateDescription() {

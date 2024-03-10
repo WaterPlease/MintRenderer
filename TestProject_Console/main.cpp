@@ -22,5 +22,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
 #ifdef _DEBUG
 	//system("pause");
 #endif
+
+	MintChoco::cComLibs::Deinit();
+
 	return 0;
 }

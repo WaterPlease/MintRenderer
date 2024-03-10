@@ -59,7 +59,7 @@ cFence::~cFence() {
 	Destroy();
 }
 
-bool cFence::Create(cDevice& Device, UINT InitialValue, D3D12_FENCE_FLAGS Flags) {
+bool cFence::Create(const cDevice& Device, UINT InitialValue, D3D12_FENCE_FLAGS Flags) {
 	if (!Device.IsCreated()) {
 		assert(false);
 		return false;

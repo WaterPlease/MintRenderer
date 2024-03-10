@@ -58,7 +58,7 @@ bool cCommandQueue::Signal(cFence& Fence, UINT Value) const {
 	return CommandQueuePtr->Signal(Fence.GetFence(), Value) == S_OK;
 }
 
-bool cCommandQueue::Wait(cDevice& Device, DWORD Timeout) const {
+bool cCommandQueue::Sync(const cDevice& Device, DWORD Timeout) const {
 	cFence Fence;
 	if (!Fence.Create(Device, 0, D3D12_FENCE_FLAG_NONE)) {
 		assert(false);
@@ -127,7 +127,7 @@ cCommandAllocator::~cCommandAllocator() {
 	Destroy();
 }
 
-bool cCommandAllocator::Create(cDevice& Device, D3D12_COMMAND_LIST_TYPE _Type) {
+bool cCommandAllocator::Create(const cDevice& Device, D3D12_COMMAND_LIST_TYPE _Type) {
 	if (!Device.IsCreated()) {
 		assert(false);
 		return false;
@@ -167,7 +167,7 @@ cGraphicsCommandList::~cGraphicsCommandList() {
 	Destroy();
 }
 
-bool cGraphicsCommandList::Create(cDevice& Device, cCommandAllocator& Allocator, D3D12_COMMAND_LIST_TYPE _Type, UINT NodeMask, ID3D12PipelineState* pPipeState) {
+bool cGraphicsCommandList::Create(const cDevice& Device, cCommandAllocator& Allocator, D3D12_COMMAND_LIST_TYPE _Type, UINT NodeMask, ID3D12PipelineState* pPipeState) {
 	if (!Device.IsCreated() || !Allocator.IsCreated()) {
 		assert(false);
 		return false;
@@ -246,10 +246,10 @@ void cGraphicsCommandList::OMSetRenderTargetsDiscrete(size_t RTCount,
 }
 
 void cGraphicsCommandList::ClearRenderTargetView(D3D12_CPU_DESCRIPTOR_HANDLE RenderTargetView,
-	const DirectX::XMFLOAT4& Color4f, size_t RectCount, const D3D12_RECT* pRect) {
+	const float* Color4f, size_t RectCount, const D3D12_RECT* pRect) {
 	RETURN_IF_NOT_CREATED();
 
-	CommandListPtr->ClearRenderTargetView(RenderTargetView, &Color4f.x, static_cast<UINT>(RectCount), pRect);
+	CommandListPtr->ClearRenderTargetView(RenderTargetView, Color4f, static_cast<UINT>(RectCount), pRect);
 }
 
 void cGraphicsCommandList::CopyResource(const cResource& Dest, const cResource& Source) {

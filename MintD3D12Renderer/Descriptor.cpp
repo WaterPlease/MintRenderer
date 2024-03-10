@@ -110,6 +110,26 @@ bool cDescriptorHeap::CreateShaderResourceView(cDevice& Device, cResource& Resou
 	return true;
 }
 
+bool cDescriptorHeap::CreateConstantBufferView(cDevice& Device, size_t iDescriptor,
+	const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc) {
+	RETURN_FALSE_IF_NOT_CREATED();
+	if (!Device.IsCreated())
+		return false;
+
+	if (Type != D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+		return false;
+
+	if (DescriptorCount <= iDescriptor)
+		return false;
+
+	const D3D12_CPU_DESCRIPTOR_HANDLE* DescriptorHandle = GetCPUDescriptorHandle(iDescriptor);
+	if (DescriptorHandle == nullptr)
+		return false;
+
+	Device.GetDevice()->CreateConstantBufferView(&Desc, *DescriptorHandle);
+	return true;
+}
+
 const D3D12_CPU_DESCRIPTOR_HANDLE* cDescriptorHeap::GetCPUDescriptorHandle(size_t iDescriptor) const {
 	if (DescriptorCount <= iDescriptor)
 		return nullptr;

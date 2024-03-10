@@ -216,7 +216,7 @@ bool cImage::Create(cSizei _Size, ePixelFormat _Format) {
 
 	const sPixelFormatTableEntry& PixelFormatTableEntry = GetPixelFormatTable(PixelFormat);
 	BPP = PixelFormatTableEntry.BitsPP;
-	Stride = ((Size.Width * ((BPP + 7) / 8) + Alignment - 1) / Alignment) * Alignment;
+	Stride = ((Size.Width * ((BPP + 7) / 8) + RowAlignment - 1) / RowAlignment) * RowAlignment;
 	DataSize = Stride * Size.Height;
 	pData = new BYTE[DataSize];
 
