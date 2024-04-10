@@ -5,7 +5,7 @@
 
 #include "App.h"
 
-int main(int, char**) {
+int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd) {
 	cMintScenePlayerApp& App = GetApp();
 
 	App.Create();

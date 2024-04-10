@@ -28,6 +28,8 @@ protected:
 
 class cMintRenderer : public cBaseD3D12Renderer {
 public:
+	static constexpr size_t MAX_FRAME_IN_FLIGHT = 2;
+
 	cMintRenderer();
 	~cMintRenderer();
 

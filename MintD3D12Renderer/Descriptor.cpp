@@ -65,7 +65,7 @@ void cDescriptorHeap::Destroy() {
 	GPUDescriptorHandle.clear();
 }
 
-bool cDescriptorHeap::CreateRenderTargetView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_RENDER_TARGET_VIEW_DESC& Desc) {
+bool cDescriptorHeap::CreateRenderTargetView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_RENDER_TARGET_VIEW_DESC& Desc) const {
 	RETURN_FALSE_IF_NOT_CREATED();
 	if (!Device.IsCreated())
 		return false;
@@ -88,7 +88,7 @@ bool cDescriptorHeap::CreateRenderTargetView(cDevice& Device, cResource& Resourc
 }
 
 bool cDescriptorHeap::CreateShaderResourceView(cDevice& Device, cResource& Resource, size_t iDescriptor,
-	const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc) {
+	const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc) const {
 	RETURN_FALSE_IF_NOT_CREATED();
 	if (!Device.IsCreated())
 		return false;
@@ -111,7 +111,7 @@ bool cDescriptorHeap::CreateShaderResourceView(cDevice& Device, cResource& Resou
 }
 
 bool cDescriptorHeap::CreateConstantBufferView(cDevice& Device, size_t iDescriptor,
-	const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc) {
+	const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc) const {
 	RETURN_FALSE_IF_NOT_CREATED();
 	if (!Device.IsCreated())
 		return false;
@@ -127,6 +127,25 @@ bool cDescriptorHeap::CreateConstantBufferView(cDevice& Device, size_t iDescript
 		return false;
 
 	Device.GetDevice()->CreateConstantBufferView(&Desc, *DescriptorHandle);
+	return true;
+}
+
+bool cDescriptorHeap::CreateSampler(cDevice& Device, size_t iDescriptor, const D3D12_SAMPLER_DESC& Desc) const {
+	RETURN_FALSE_IF_NOT_CREATED();
+	if (!Device.IsCreated())
+		return false;
+
+	if (Type != D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER)
+		return false;
+
+	if (DescriptorCount <= iDescriptor)
+		return false;
+
+	const D3D12_CPU_DESCRIPTOR_HANDLE* DescriptorHandle = GetCPUDescriptorHandle(iDescriptor);
+	if (DescriptorHandle == nullptr)
+		return false;
+
+	Device.GetDevice()->CreateSampler(&Desc, *DescriptorHandle);
 	return true;
 }
 

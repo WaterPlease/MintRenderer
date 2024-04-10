@@ -1,11 +1,14 @@
 #pragma once
 #include <vector>
 
+#include "Utilities.h"
+
 namespace MintChoco {
 	class cShader {
+		DELETE_CLASS_COPY(cShader);
 	public:
 		cShader();
-		~cShader();
+		virtual ~cShader();
 
 		bool Create(const std::wstring& Path);
 		void Destroy();

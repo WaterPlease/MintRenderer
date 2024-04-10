@@ -51,6 +51,55 @@ bool cEvent::SetEvent(bool bSet) const {
 	return false;
 }
 
+cSRWLock::cSRWLock() {
+#ifdef _DEBUG
+	bInit = false;
+#endif
+}
+
+cSRWLock::~cSRWLock() {
+	Destroy();
+}
+
+bool cSRWLock::Create() {
+	InitializeSRWLock(&Lock);
+#ifdef _DEBUG
+	bInit = true;
+#endif
+
+	return true;
+}
+
+void cSRWLock::Destroy() {
+#ifdef _DEBUG
+	bInit = false;
+#endif
+}
+
+bool cSRWLock::LockExclusive() {
+	assert(bInit);
+	AcquireSRWLockExclusive(&Lock);
+
+	return true;
+}
+
+void cSRWLock::UnlockExclusive() {
+	assert(bInit);
+	ReleaseSRWLockExclusive(&Lock);
+}
+
+bool cSRWLock::LockShared() {
+	assert(bInit);
+	AcquireSRWLockShared(&Lock);
+
+	return true;
+}
+
+void cSRWLock::UnlockShared() {
+	assert(bInit);
+	ReleaseSRWLockShared(&Lock);
+}
+
 cFence::cFence() {
 
 }

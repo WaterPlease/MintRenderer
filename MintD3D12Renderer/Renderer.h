@@ -12,6 +12,7 @@
 
 namespace MintChoco {
 	class cRendererDebugContext {
+		DELETE_CLASS_COPY(cRendererDebugContext);
 	public:
 		cDXGIDebug DXGIDebug;
 		cD3D12Debug D3D12Debug;
@@ -34,7 +35,7 @@ namespace MintChoco {
 		DELETE_CLASS_COPY(cBaseD3D12Renderer);
 	public:
 		cBaseD3D12Renderer();
-		~cBaseD3D12Renderer();
+		virtual ~cBaseD3D12Renderer();
 
 		bool InitHWMngr();
 		bool CreateDevice(size_t iGPU, cDevice::eFeatureLevel MinFeatureLevel = cDevice::eFeatureLevel::FEATURE_LEVEL_11_0, cDevice::eFeatureLevel MaxFeatureLevel = cDevice::eFeatureLevel::FEATURE_LEVEL_COUNT);

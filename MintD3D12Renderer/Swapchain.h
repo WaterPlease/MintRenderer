@@ -5,6 +5,7 @@
 
 #include <wrl.h>
 #include <Windows.h>
+#include <dxgi1_6.h>
 
 #include "Geometry.h"
 #include "Resource.h"

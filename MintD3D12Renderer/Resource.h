@@ -4,12 +4,14 @@
 #include <wrl.h>
 
 #include "Geometry.h"
+#include "Utilities.h"
 
 namespace MintChoco {
 	class cDevice;
 	using Microsoft::WRL::ComPtr;
 
 	class cResource {
+		DELETE_CLASS_COPY(cResource);
 	public:
 		using ID3D12ResourceN = ID3D12Resource2;
 		struct sMMapToken {
@@ -22,7 +24,7 @@ namespace MintChoco {
 		};
 
 		cResource();
-		~cResource();
+		virtual ~cResource();
 
 		bool Create(ID3D12Resource* pResource);
 		void Destroy();
@@ -43,6 +45,7 @@ namespace MintChoco {
 	};
 
 	class cResoureBarrier {
+		DELETE_CLASS_COPY(cResoureBarrier);
 	public:
 		cResoureBarrier();
 		~cResoureBarrier();

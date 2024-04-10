@@ -3,14 +3,17 @@
 #include <d3d12.h>
 #include <wrl.h>
 
+#include "Utilities.h"
+
 namespace MintChoco {
 	class cDevice;
 	using Microsoft::WRL::ComPtr;
 
 	class cPipelineStateObject {
+		DELETE_CLASS_COPY(cPipelineStateObject);
 	public:
 		cPipelineStateObject();
-		~cPipelineStateObject();
+		virtual ~cPipelineStateObject();
 
 		void Destroy();
 
@@ -25,6 +28,7 @@ namespace MintChoco {
 	};
 
 	class cGraphicsPipelineStateObject : public cPipelineStateObject {
+		DELETE_CLASS_COPY(cGraphicsPipelineStateObject);
 	public:
 		bool Create(cDevice& Device, const D3D12_GRAPHICS_PIPELINE_STATE_DESC& Desc);
 

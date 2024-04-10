@@ -3,12 +3,15 @@
 #include <vector>
 #include <wrl.h>
 
+#include "Utilities.h"
+
 namespace MintChoco {
 	class cResource;
 	class cDevice;
 	using Microsoft::WRL::ComPtr;
 
 	class cDescriptorHeap {
+		DELETE_CLASS_COPY(cDescriptorHeap)
 	public:
 		using ID3D12DescriptorHeapN = ID3D12DescriptorHeap;
 		cDescriptorHeap();
@@ -18,9 +21,10 @@ namespace MintChoco {
 		void Destroy();
 
 		// Descriptor Creation
-		bool CreateRenderTargetView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_RENDER_TARGET_VIEW_DESC& Desc);
-		bool CreateShaderResourceView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc);
-		bool CreateConstantBufferView(cDevice& Device, size_t iDescriptor, const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc);
+		bool CreateRenderTargetView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_RENDER_TARGET_VIEW_DESC& Desc) const;
+		bool CreateShaderResourceView(cDevice& Device, cResource& Resource, size_t iDescriptor, const D3D12_SHADER_RESOURCE_VIEW_DESC& Desc) const;
+		bool CreateConstantBufferView(cDevice& Device, size_t iDescriptor, const D3D12_CONSTANT_BUFFER_VIEW_DESC& Desc) const;
+		bool CreateSampler(cDevice& Device, size_t iDescriptor, const D3D12_SAMPLER_DESC& Desc) const;
 
 		bool					IsCreated() const { return DescriptorHeap.Get(); }
 		ID3D12DescriptorHeapN*	GetDescriptorHeap() const { return DescriptorHeap.Get(); }
@@ -39,6 +43,7 @@ namespace MintChoco {
 	};
 
 	class cRootSignature {
+		DELETE_CLASS_COPY(cRootSignature)
 	public:
 		using ID3D12RootSignatureN = ID3D12RootSignature;
 		cRootSignature();

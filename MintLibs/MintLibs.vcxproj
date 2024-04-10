@@ -148,12 +148,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ComObject.h" />
+    <ClInclude Include="Data.h" />
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="Image.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ComObject.cpp" />
+    <ClCompile Include="Data.cpp" />
     <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Image.cpp" />
     <ClCompile Include="pch.cpp">

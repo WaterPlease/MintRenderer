@@ -31,6 +31,27 @@ namespace MintChoco {
 		HANDLE hEvent;
 	};
 
+	class cSRWLock {
+	public:
+		cSRWLock();
+		~cSRWLock();
+
+		bool Create();
+		void Destroy();
+
+		bool LockExclusive();
+		void UnlockExclusive();
+
+		bool LockShared();
+		void UnlockShared();
+	protected:
+		SRWLOCK Lock;
+
+#ifdef _DEBUG
+		bool bInit;
+#endif
+	};
+
 	class cDevice;
 	class cFence {
 		DELETE_CLASS_COPY(cFence);
@@ -55,6 +76,7 @@ namespace MintChoco {
 	};
 
 	class cFrameSync {
+		DELETE_CLASS_COPY(cFrameSync);
 	public:
 		cFrameSync();
 		~cFrameSync();
